@@ -18,10 +18,8 @@ export async function textToSpeech(
   const mp3 = await openai.audio.speech.create({
     model: "tts-1",
     voice: "alloy",
-    input:
-      "By default, the Whisper API will output a transcript of the provided audio in text. ",
+    input: request.query.get("text"),
   });
-  console.log("AUDIO CREATED");
   const buffer = Buffer.from(await mp3.arrayBuffer());
   await fs.promises.writeFile(speechFile, buffer);
 
@@ -31,16 +29,12 @@ export async function textToSpeech(
     response_format: "verbose_json",
     timestamp_granularities: ["word"],
   });
-  console.log("AUDIO TRANSCRIBED");
 
-  //   console.log(transcription.text);
-  console.log(transcription);
-
-  return { body: `Worked` };
+  return { jsonBody: transcription };
 }
 
 app.http("textToSpeech", {
-  methods: ["GET", "POST"],
+  methods: ["POST"],
   authLevel: "anonymous",
   handler: textToSpeech,
 });
