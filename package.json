@@ -13,7 +13,10 @@
   "dependencies": {
     "@azure/functions": "^4.0.0",
     "@imgly/background-removal-node": "^1.4.5",
-    "openai": "^4.55.7"
+    "@xixiyahaha/rembg-node": "^2.2.0",
+    "openai": "^4.55.7",
+    "sharp": "^0.32.6",
+    "transparent-background": "^1.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.x",
