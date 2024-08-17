@@ -15,11 +15,13 @@ export async function textToSpeech(
   request: HttpRequest,
   context: InvocationContext
 ): Promise<HttpResponseInit> {
-  const requestBody: any = await request.json();
+  const textBody = await request.text();
+  const parsedBody: { Text: string } = JSON.parse(textBody);
+
   const mp3 = await openai.audio.speech.create({
     model: "tts-1",
     voice: "alloy",
-    input: requestBody.text,
+    input: parsedBody.Text,
   });
   const buffer = Buffer.from(await mp3.arrayBuffer());
   await fs.promises.writeFile(speechFile, buffer);
