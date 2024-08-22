@@ -14,8 +14,6 @@
     "@0dep/pino-applicationinsights": "^1.0.0",
     "@azure/functions": "^4.0.0",
     "@azure/storage-blob": "^12.24.0",
-    "@imgly/background-removal-node": "^1.4.5",
-    "@xixiyahaha/rembg-node": "^2.2.0",
     "axios": "^1.7.4",
     "mongodb": "^6.8.0",
     "openai": "^4.55.7",
@@ -23,7 +21,6 @@
     "pino-applicationinsights": "^2.1.0",
     "pino-pretty": "^11.2.2",
     "sharp": "^0.32.6",
-    "transparent-background": "^1.5.0",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
