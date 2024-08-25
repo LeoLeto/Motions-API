@@ -26,19 +26,18 @@ interface dalleAssetInterface {
   url: string;
 }
 
-const AZURE_STORAGE_CONNECTION_STRING =
-  process.env.AZURE_STORAGE_CONNECTION_STRING;
-
-const blobServiceClient = BlobServiceClient.fromConnectionString(
-  AZURE_STORAGE_CONNECTION_STRING
-);
-
-const containerClient = blobServiceClient.getContainerClient("motion-ai");
-
 export async function createDalleAsset(
   request: HttpRequest,
   context: InvocationContext
 ): Promise<HttpResponseInit> {
+  const AZURE_STORAGE_CONNECTION_STRING =
+    process.env.AZURE_STORAGE_CONNECTION_STRING;
+
+  const blobServiceClient = BlobServiceClient.fromConnectionString(
+    AZURE_STORAGE_CONNECTION_STRING
+  );
+
+  const containerClient = blobServiceClient.getContainerClient("motion-ai");
   const textBody = await request.text();
   const parsedBody: dalleAssetInterface[] = JSON.parse(textBody);
   const db = await createMongoDBConnection();
@@ -94,6 +93,14 @@ async function deleteDalleAsset(
   const db = await createMongoDBConnection();
   const dalleAssets = db.collection("dalleAssets");
 
+  const AZURE_STORAGE_CONNECTION_STRING =
+    process.env.AZURE_STORAGE_CONNECTION_STRING;
+
+  const blobServiceClient = BlobServiceClient.fromConnectionString(
+    AZURE_STORAGE_CONNECTION_STRING
+  );
+  const containerClient = blobServiceClient.getContainerClient("motion-ai");
+
   try {
     const deleteDalleAssetResponse = await dalleAssets.deleteOne({
       code: parsedBody.code,
@@ -114,7 +121,6 @@ async function deleteDalleAsset(
 app.http("dalleAsset", {
   methods: ["POST", "DELETE"],
   authLevel: "anonymous",
-  // handler: createDalleAsset,
   handler: async (req, context) => {
     switch (req.method) {
       case "POST":
