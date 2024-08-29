@@ -14,7 +14,7 @@ export async function first(
   logger.info("Informational message");
   logger.error(new Error("things got bad"), "error message");
 
-  const name = request.query.get("name") || (await request.text()) || "world";
+  const name = request.params.name;
 
   return { body: `Hello, ${name}!` };
 }
