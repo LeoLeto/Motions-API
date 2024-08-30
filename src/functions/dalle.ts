@@ -6,8 +6,6 @@ import {
 } from "@azure/functions";
 import OpenAI from "openai";
 
-const openai = new OpenAI();
-
 export async function dalle(
   request: HttpRequest,
   context: InvocationContext
@@ -24,6 +22,16 @@ export async function returnDalleImage(
   receivedProportion?: "square" | "horizontal" | "vertical"
   // receivedSize?: "1024x1024" | "1792x1024" | "1024x1792"
 ) {
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+  if (!OPENAI_API_KEY) {
+    throw new Error(
+      "The OPENAI_API_KEY environment variable is missing or empty."
+    );
+  }
+
+  const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+
   // console.log("CREATING IMAGE");
   const image = await openai.images.generate({
     model: "dall-e-3",

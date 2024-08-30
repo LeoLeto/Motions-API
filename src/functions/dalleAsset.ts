@@ -10,8 +10,9 @@ import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { Readable } from "stream";
 import { createMongoDBConnection } from "./shared/mongodbConfig";
+import { logger } from "./shared/pinoLogger";
 
-interface dalleAssetInterface {
+export interface dalleAssetInterface {
   code: string;
   prompt: string;
   // size: "1024x1024" | "1792x1024" | "1024x1792";
@@ -26,24 +27,52 @@ interface dalleAssetInterface {
   url: string;
 }
 
-const AZURE_STORAGE_CONNECTION_STRING =
-  process.env.AZURE_STORAGE_CONNECTION_STRING;
-
-const blobServiceClient = BlobServiceClient.fromConnectionString(
-  AZURE_STORAGE_CONNECTION_STRING
-);
-
-const containerClient = blobServiceClient.getContainerClient("motion-ai");
-
 export async function createDalleAsset(
   request: HttpRequest,
   context: InvocationContext
 ): Promise<HttpResponseInit> {
+  const AZURE_STORAGE_CONNECTION_STRING =
+    process.env.AZURE_STORAGE_CONNECTION_STRING;
+
+  const blobServiceClient = BlobServiceClient.fromConnectionString(
+    AZURE_STORAGE_CONNECTION_STRING
+  );
+
+  const containerClient = blobServiceClient.getContainerClient("motion-ai");
   const textBody = await request.text();
   const parsedBody: dalleAssetInterface[] = JSON.parse(textBody);
   const db = await createMongoDBConnection();
   const dalleAssets = db.collection("dalleAssets");
   let createdAssets: dalleAssetInterface[] = [];
+
+  // console.log(parsedBody);
+  // return
+
+  for (const receivedObject of parsedBody) {
+    // console.log(receivedObject);
+
+    if (receivedObject.prompt.length < 3) {
+      logger.error(
+        new Error("Prompt too short"),
+        `The prompt provided was only ${receivedObject.prompt.length} characters long`
+      );
+
+      return { status: 400 };
+    }
+
+    if (
+      receivedObject.orientation !== "square" &&
+      receivedObject.orientation !== "horizontal" &&
+      receivedObject.orientation !== "vertical"
+    ) {
+      logger.error(
+        new Error("Wrong orientation"),
+        `Orientation should be "square", "horizontal" or "vertical"; not: ${receivedObject.orientation}`
+      );
+      return { status: 400 };
+    }
+  }
+  return;
 
   try {
     for await (const [indexAsset, assetPayload] of parsedBody.entries()) {
@@ -94,6 +123,14 @@ async function deleteDalleAsset(
   const db = await createMongoDBConnection();
   const dalleAssets = db.collection("dalleAssets");
 
+  const AZURE_STORAGE_CONNECTION_STRING =
+    process.env.AZURE_STORAGE_CONNECTION_STRING;
+
+  const blobServiceClient = BlobServiceClient.fromConnectionString(
+    AZURE_STORAGE_CONNECTION_STRING
+  );
+  const containerClient = blobServiceClient.getContainerClient("motion-ai");
+
   try {
     const deleteDalleAssetResponse = await dalleAssets.deleteOne({
       code: parsedBody.code,
@@ -114,7 +151,6 @@ async function deleteDalleAsset(
 app.http("dalleAsset", {
   methods: ["POST", "DELETE"],
   authLevel: "anonymous",
-  // handler: createDalleAsset,
   handler: async (req, context) => {
     switch (req.method) {
       case "POST":
