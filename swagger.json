@@ -1,0 +1,295 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "DALL·E and Text-to-Speech API",
+    "description": "API for creating and deleting DALL·E assets and converting text to speech",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/dalleAsset": {
+      "post": {
+        "summary": "Create DALL·E Asset",
+        "operationId": "createDalleAsset",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/dalleAssetInterface"
+                }
+              },
+              "examples": {
+                "example-1": {
+                  "summary": "Example Asset Creation Request",
+                  "value": [
+                    {
+                      "prompt": "A new animal that's half-cat half-parrot",
+                      "isTransparent": true,
+                      "orientation": "square",
+                      "description": "Description of the asset",
+                      "tags": ["tag 1", "tag 2"]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assets created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/dalleAssetInterface"
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "summary": "Example Asset Creation Response",
+                    "value": [
+                      {
+                        "prompt": "A new animal that's half-cat half-parrot",
+                        "orientation": "square",
+                        "isTransparent": true,
+                        "code": "21b77fd6-1dbd-4722-b401-3ba118ae56ed",
+                        "width": 1024,
+                        "height": 1024,
+                        "revisedPrompt": "Imagine a new species of animal, a blend between a cat and a parrot...",
+                        "description": "Description of the asset",
+                        "tags": ["tag 1", "tag 2"],
+                        "url": "https://sophieassets.blob.core.windows.net/motion-ai/21b77fd6-1dbd-4722-b401-3ba118ae56ed.png",
+                        "_id": "66d398faa119d28f5fd4f2ac"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete DALL·E Asset",
+        "operationId": "deleteDalleAsset",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique code of the asset to be deleted"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/textToSpeech": {
+      "post": {
+        "summary": "Convert Text to Speech",
+        "operationId": "textToSpeech",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Text": {
+                    "type": "string",
+                    "description": "The text to be converted to speech"
+                  }
+                },
+                "required": ["Text"]
+              },
+              "examples": {
+                "example-1": {
+                  "summary": "Example Text-to-Speech Request",
+                  "value": {
+                    "Text": "This is a test."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Speech and transcription generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/textToSpeechResponse"
+                },
+                "examples": {
+                  "example-1": {
+                    "summary": "Example Text-to-Speech Response",
+                    "value": {
+                      "task": "transcribe",
+                      "language": "english",
+                      "duration": 0.86,
+                      "text": "This is a test.",
+                      "words": [
+                        {
+                          "word": "This",
+                          "start": 0,
+                          "end": 0.2
+                        },
+                        {
+                          "word": "is",
+                          "start": 0.2,
+                          "end": 0.34
+                        },
+                        {
+                          "word": "a",
+                          "start": 0.34,
+                          "end": 0.48
+                        },
+                        {
+                          "word": "test",
+                          "start": 0.48,
+                          "end": 0.72
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "dalleAssetInterface": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Unique identifier for the asset"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Text prompt used to generate the asset"
+          },
+          "orientation": {
+            "type": "string",
+            "description": "Orientation of the asset",
+            "enum": ["square", "horizontal", "vertical"]
+          },
+          "isTransparent": {
+            "type": "boolean",
+            "description": "Indicates if the asset has a transparent background"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the asset"
+          },
+          "width": {
+            "type": "integer",
+            "description": "Width of the asset in pixels"
+          },
+          "height": {
+            "type": "integer",
+            "description": "Height of the asset in pixels"
+          },
+          "revisedPrompt": {
+            "type": "string",
+            "description": "Revised prompt used by DALL·E"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags associated with the asset"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL where the asset is stored"
+          }
+        },
+        "required": [
+          "prompt",
+          "isTransparent",
+          "orientation",
+          "description",
+          "tags"
+        ]
+      },
+      "textToSpeechResponse": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "description": "Task performed, e.g., transcribe"
+          },
+          "language": {
+            "type": "string",
+            "description": "Language of the input text"
+          },
+          "duration": {
+            "type": "number",
+            "format": "float",
+            "description": "Duration of the audio in seconds"
+          },
+          "text": {
+            "type": "string",
+            "description": "Transcription of the audio"
+          },
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "word": {
+                  "type": "string",
+                  "description": "Word in the transcription"
+                },
+                "start": {
+                  "type": "number",
+                  "format": "float",
+                  "description": "Start time of the word in seconds"
+                },
+                "end": {
+                  "type": "number",
+                  "format": "float",
+                  "description": "End time of the word in seconds"
+                }
+              }
+            },
+            "description": "List of words with start and end timestamps"
+          }
+        }
+      }
+    }
+  }
+}
