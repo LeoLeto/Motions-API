@@ -15,16 +15,14 @@ import { logger } from "./shared/pinoLogger";
 export interface dalleAssetInterface {
   code: string;
   prompt: string;
-  // size: "1024x1024" | "1792x1024" | "1024x1792";
-  // type: "background" | "asset";
   orientation: "square" | "horizontal" | "vertical";
   isTransparent: boolean;
-  width: number;
-  height: number;
-  revisedPrompt: string;
   description: string;
+  width?: number;
+  height?: number;
+  revisedPrompt?: string;
   tags: string[];
-  url: string;
+  url?: string;
 }
 
 export async function createDalleAsset(
@@ -72,7 +70,6 @@ export async function createDalleAsset(
       return { status: 400 };
     }
   }
-  return;
 
   try {
     for await (const [indexAsset, assetPayload] of parsedBody.entries()) {
