@@ -5,18 +5,16 @@ import {
   InvocationContext,
 } from "@azure/functions";
 import axios from "axios";
-import { Readable } from "stream";
+import { PassThrough, Readable } from "stream";
 import Jimp from "jimp";
 import { v4 as uuid } from "uuid";
+import { dalleAssetInterface } from "./dalleAsset";
+import { BlobServiceClient } from "@azure/storage-blob";
+import { createMongoDBConnection } from "./shared/mongodbConfig";
+import { uploadImageToBlobStorage } from "./shared/uploadImageToBlobStorage";
+import { insertDalleAsset } from "./shared/insertDalleAsset";
 
-interface VisionRectangle {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-interface VisionResponseObjectInterface {
+export interface VisionResponseObjectInterface {
   rectangle: VisionRectangle;
   object: string;
   confidence: number;
@@ -24,6 +22,14 @@ interface VisionResponseObjectInterface {
     object: string;
     confidence: number;
   };
+  sceneCode?: string;
+}
+
+interface VisionRectangle {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 export async function analyzeImage(
@@ -36,7 +42,7 @@ export async function analyzeImage(
   const textBody = await request.text();
   const parsedBody: { url: string } = JSON.parse(textBody);
 
-  const axiosVisionResponse = await axios
+  const visionResponse = await axios
     .post(AZURE_VISION_ENDPOINT, parsedBody, {
       headers: {
         "Ocp-Apim-Subscription-Key": AZURE_VISION_KEY,
@@ -47,26 +53,39 @@ export async function analyzeImage(
     })
     .catch((error) => console.error(error));
 
-  cropImage(parsedBody.url, axiosVisionResponse.objects);
+  const croppedObjects = await cropImageAndUploadAssets(
+    parsedBody.url,
+    visionResponse.objects
+  );
 
-  return { jsonBody: axiosVisionResponse };
+  return { jsonBody: { visionResponse, croppedObjects } };
 }
 
-async function cropImage(
+async function cropImageAndUploadAssets(
   imageUrl: string,
   imageObjects: VisionResponseObjectInterface[]
-) {
+): Promise<dalleAssetInterface[]> {
   try {
+    const AZURE_STORAGE_CONNECTION_STRING =
+      process.env.AZURE_STORAGE_CONNECTION_STRING;
+
+    const blobServiceClient = BlobServiceClient.fromConnectionString(
+      AZURE_STORAGE_CONNECTION_STRING
+    );
+
+    const db = await createMongoDBConnection();
+    const dalleAssets = db.collection<dalleAssetInterface>("dalleAssets");
+    let createdAssets: dalleAssetInterface[] = [];
+
+    const containerClient = blobServiceClient.getContainerClient("motion-ai");
     const axiosResponse = await axios.get(imageUrl, {
       responseType: "arraybuffer",
     });
-    const imageBuffer = Buffer.from(axiosResponse.data);
-    const originalImage = await Jimp.read(imageBuffer);
+    const originalImage = await Jimp.read(Buffer.from(axiosResponse.data));
 
     for (const object of imageObjects) {
       const { x, y, w, h } = object.rectangle;
 
-      // Validate crop dimensions against the original image
       if (
         x < 0 ||
         y < 0 ||
@@ -81,13 +100,45 @@ async function cropImage(
         continue;
       }
 
+      const orientation: "vertical" | "horizontal" | "square" =
+        w > h ? "horizontal" : h > w ? "vertical" : "square";
+
+      const assetCode = uuid();
       const croppedImage = originalImage.clone().crop(x, y, w, h);
-      const outputFilename = `${uuid()}.png`;
-      await croppedImage.writeAsync(outputFilename);
-      console.log(`Cropped image saved as ${outputFilename}`);
+      const outputFilename = `${assetCode}.png`;
+      const croppedImageBuffer = await croppedImage.getBufferAsync(
+        Jimp.MIME_PNG
+      );
+      const croppedImageStream = new PassThrough();
+      croppedImageStream.end(croppedImageBuffer);
+      const url = await uploadImageToBlobStorage(
+        containerClient,
+        croppedImageStream,
+        outputFilename
+      );
+
+      const newAssetPayload: dalleAssetInterface = {
+        prompt: "",
+        orientation,
+        isTransparent: false,
+        code: assetCode,
+        width: w,
+        height: h,
+        revisedPrompt: "",
+        description: "",
+        tags: [],
+        url,
+        scene: object,
+      };
+
+      await insertDalleAsset(dalleAssets, newAssetPayload);
+      createdAssets.push(newAssetPayload);
     }
+
+    return createdAssets;
   } catch (error) {
     console.error("Error cropping image:", error);
+    throw error;
   }
 }
 

@@ -188,7 +188,7 @@
     },
     "/analyzeImage": {
       "post": {
-        "summary": "Analyze an image using Azure Vision API",
+        "summary": "Analyze an image using Azure Vision API, crop detected objects and upload them to Azure blob storage",
         "operationId": "analyzeImage",
         "requestBody": {
           "required": true,
@@ -209,84 +209,126 @@
         },
         "responses": {
           "200": {
-            "description": "Analysis of the image",
+            "description": "Analysis of the image and cropped objects",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "objects": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "rectangle": {
-                            "type": "object",
-                            "properties": {
-                              "x": { "type": "integer" },
-                              "y": { "type": "integer" },
-                              "w": { "type": "integer" },
-                              "h": { "type": "integer" }
-                            }
-                          },
-                          "object": { "type": "string" },
-                          "confidence": { "type": "number" },
-                          "parent": {
-                            "type": "object",
-                            "properties": {
-                              "object": { "type": "string" },
-                              "confidence": { "type": "number" }
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "requestId": { "type": "string" },
-                    "metadata": {
-                      "type": "object",
-                      "properties": {
-                        "height": { "type": "integer" },
-                        "width": { "type": "integer" },
-                        "format": { "type": "string" }
-                      }
-                    },
-                    "modelVersion": { "type": "string" }
-                  }
+                  "$ref": "#/components/schemas/AnalyzeImageResponse"
                 },
                 "example": {
-                  "objects": [
-                    {
-                      "rectangle": { "x": 338, "y": 46, "w": 167, "h": 161 },
-                      "object": "Wall clock",
-                      "confidence": 0.783,
-                      "parent": {
-                        "object": "Clock",
-                        "confidence": 0.802
+                  "visionResponse": {
+                    "objects": [
+                      {
+                        "rectangle": { "x": 338, "y": 46, "w": 167, "h": 161 },
+                        "object": "Wall clock",
+                        "confidence": 0.783,
+                        "parent": {
+                          "object": "Clock",
+                          "confidence": 0.802
+                        }
+                      },
+                      {
+                        "rectangle": { "x": 151, "y": 153, "w": 169, "h": 272 },
+                        "object": "Picture frame",
+                        "confidence": 0.528
+                      },
+                      {
+                        "rectangle": { "x": 404, "y": 54, "w": 409, "h": 507 },
+                        "object": "person",
+                        "confidence": 0.855
+                      },
+                      {
+                        "rectangle": { "x": 9, "y": 378, "w": 698, "h": 184 },
+                        "object": "Desk",
+                        "confidence": 0.56
                       }
+                    ],
+                    "requestId": "d0b0b14b-a2a9-4be8-a8b9-5ddab750b3ed",
+                    "metadata": {
+                      "height": 576,
+                      "width": 1024,
+                      "format": "Jpeg"
                     },
-                    {
-                      "rectangle": { "x": 151, "y": 153, "w": 169, "h": 272 },
-                      "object": "Picture frame",
-                      "confidence": 0.528
-                    },
-                    {
-                      "rectangle": { "x": 404, "y": 54, "w": 409, "h": 507 },
-                      "object": "person",
-                      "confidence": 0.855
-                    },
-                    {
-                      "rectangle": { "x": 9, "y": 378, "w": 698, "h": 184 },
-                      "object": "Desk",
-                      "confidence": 0.56
-                    }
-                  ],
-                  "requestId": "77cf3748-bf23-4098-9645-da8ae645a985",
-                  "metadata": {
-                    "height": 576,
-                    "width": 1024,
-                    "format": "Jpeg"
+                    "modelVersion": "2021-05-01"
                   },
-                  "modelVersion": "2021-05-01"
+                  "croppedObjects": [
+                    {
+                      "prompt": "",
+                      "orientation": "horizontal",
+                      "isTransparent": false,
+                      "code": "c22d11ce-609e-4e79-b886-a549f78f4758",
+                      "width": 167,
+                      "height": 161,
+                      "revisedPrompt": "",
+                      "description": "",
+                      "tags": [],
+                      "url": "https://sophieassets.blob.core.windows.net/motion-ai/c22d11ce-609e-4e79-b886-a549f78f4758.png",
+                      "scene": {
+                        "rectangle": { "x": 338, "y": 46, "w": 167, "h": 161 },
+                        "object": "Wall clock",
+                        "confidence": 0.783,
+                        "parent": {
+                          "object": "Clock",
+                          "confidence": 0.802
+                        }
+                      },
+                      "_id": "66d4a805a3603d398e9d053f"
+                    },
+                    {
+                      "prompt": "",
+                      "orientation": "vertical",
+                      "isTransparent": false,
+                      "code": "2bf382a8-9c2e-4889-b79d-aa5976f9eead",
+                      "width": 169,
+                      "height": 272,
+                      "revisedPrompt": "",
+                      "description": "",
+                      "tags": [],
+                      "url": "https://sophieassets.blob.core.windows.net/motion-ai/2bf382a8-9c2e-4889-b79d-aa5976f9eead.png",
+                      "scene": {
+                        "rectangle": { "x": 151, "y": 153, "w": 169, "h": 272 },
+                        "object": "Picture frame",
+                        "confidence": 0.528
+                      },
+                      "_id": "66d4a806a3603d398e9d0540"
+                    },
+                    {
+                      "prompt": "",
+                      "orientation": "vertical",
+                      "isTransparent": false,
+                      "code": "5f34c615-7918-43ef-bf0b-d339dea68f76",
+                      "width": 409,
+                      "height": 507,
+                      "revisedPrompt": "",
+                      "description": "",
+                      "tags": [],
+                      "url": "https://sophieassets.blob.core.windows.net/motion-ai/5f34c615-7918-43ef-bf0b-d339dea68f76.png",
+                      "scene": {
+                        "rectangle": { "x": 404, "y": 54, "w": 409, "h": 507 },
+                        "object": "person",
+                        "confidence": 0.855
+                      },
+                      "_id": "66d4a806a3603d398e9d0541"
+                    },
+                    {
+                      "prompt": "",
+                      "orientation": "horizontal",
+                      "isTransparent": false,
+                      "code": "c04ca999-c642-4e2e-beb9-c0f50bffa541",
+                      "width": 698,
+                      "height": 184,
+                      "revisedPrompt": "",
+                      "description": "",
+                      "tags": [],
+                      "url": "https://sophieassets.blob.core.windows.net/motion-ai/c04ca999-c642-4e2e-beb9-c0f50bffa541.png",
+                      "scene": {
+                        "rectangle": { "x": 9, "y": 378, "w": 698, "h": 184 },
+                        "object": "Desk",
+                        "confidence": 0.56
+                      },
+                      "_id": "66d4a807a3603d398e9d0542"
+                    }
+                  ]
                 }
               }
             }
@@ -395,6 +437,84 @@
               }
             },
             "description": "List of words with start and end timestamps"
+          }
+        }
+      },
+      "Rectangle": {
+        "type": "object",
+        "properties": {
+          "x": { "type": "integer" },
+          "y": { "type": "integer" },
+          "w": { "type": "integer" },
+          "h": { "type": "integer" }
+        }
+      },
+      "ObjectDetail": {
+        "type": "object",
+        "properties": {
+          "rectangle": { "$ref": "#/components/schemas/Rectangle" },
+          "object": { "type": "string" },
+          "confidence": { "type": "number" },
+          "parent": {
+            "type": "object",
+            "properties": {
+              "object": { "type": "string" },
+              "confidence": { "type": "number" }
+            }
+          }
+        }
+      },
+      "VisionResponse": {
+        "type": "object",
+        "properties": {
+          "objects": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ObjectDetail" }
+          },
+          "requestId": { "type": "string" },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "height": { "type": "integer" },
+              "width": { "type": "integer" },
+              "format": { "type": "string" }
+            }
+          },
+          "modelVersion": { "type": "string" }
+        }
+      },
+      "CroppedObject": {
+        "type": "object",
+        "properties": {
+          "prompt": { "type": "string" },
+          "orientation": {
+            "type": "string",
+            "enum": ["square", "horizontal", "vertical"]
+          },
+          "isTransparent": { "type": "boolean" },
+          "code": { "type": "string" },
+          "width": { "type": "integer" },
+          "height": { "type": "integer" },
+          "revisedPrompt": { "type": "string" },
+          "description": { "type": "string" },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "url": { "type": "string" },
+          "scene": { "$ref": "#/components/schemas/ObjectDetail" },
+          "_id": { "type": "string" }
+        }
+      },
+      "AnalyzeImageResponse": {
+        "type": "object",
+        "properties": {
+          "visionResponse": {
+            "$ref": "#/components/schemas/VisionResponse"
+          },
+          "croppedObjects": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CroppedObject" }
           }
         }
       }

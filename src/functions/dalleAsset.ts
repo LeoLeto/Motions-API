@@ -11,6 +11,9 @@ import axios from "axios";
 import { Readable } from "stream";
 import { createMongoDBConnection } from "./shared/mongodbConfig";
 import { logger } from "./shared/pinoLogger";
+import { VisionResponseObjectInterface } from "./analyzeImage";
+import { uploadImageToBlobStorage } from "./shared/uploadImageToBlobStorage";
+import { insertDalleAsset } from "./shared/insertDalleAsset";
 
 export interface dalleAssetInterface {
   code: string;
@@ -23,6 +26,7 @@ export interface dalleAssetInterface {
   revisedPrompt?: string;
   tags: string[];
   url?: string;
+  scene?: VisionResponseObjectInterface
 }
 
 export async function createDalleAsset(
@@ -40,33 +44,12 @@ export async function createDalleAsset(
   const textBody = await request.text();
   const parsedBody: dalleAssetInterface[] = JSON.parse(textBody);
   const db = await createMongoDBConnection();
-  const dalleAssets = db.collection("dalleAssets");
+  const dalleAssets = db.collection<dalleAssetInterface>("dalleAssets");
   let createdAssets: dalleAssetInterface[] = [];
 
-  // console.log(parsedBody);
-  // return
-
   for (const receivedObject of parsedBody) {
-    // console.log(receivedObject);
-
-    if (receivedObject.prompt.length < 3) {
-      logger.error(
-        new Error("Prompt too short"),
-        `The prompt provided was only ${receivedObject.prompt.length} characters long`
-      );
-
-      return { status: 400 };
-    }
-
-    if (
-      receivedObject.orientation !== "square" &&
-      receivedObject.orientation !== "horizontal" &&
-      receivedObject.orientation !== "vertical"
-    ) {
-      logger.error(
-        new Error("Wrong orientation"),
-        `Orientation should be "square", "horizontal" or "vertical"; not: ${receivedObject.orientation}`
-      );
+    if (receivedObject.prompt.length < 3 || !["square", "horizontal", "vertical"].includes(receivedObject.orientation)) {
+      logger.error(new Error("Invalid input"));
       return { status: 400 };
     }
   }
@@ -78,29 +61,27 @@ export async function createDalleAsset(
         assetPayload.orientation
       );
       const assetCode = uuidv4();
-      const blobName = assetCode + ".png";
-      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+      const blobName = `${assetCode}.png`;
       const imageBuffer = await axios.get(newImage.url, {
         responseType: "arraybuffer",
       });
       const imageStream = Readable.from(Buffer.from(imageBuffer.data));
-      await blockBlobClient.uploadStream(imageStream);
+      const url = await uploadImageToBlobStorage(containerClient, imageStream, blobName);
 
       const newAssetPayload: dalleAssetInterface = {
         prompt: parsedBody[indexAsset].prompt,
         orientation: parsedBody[indexAsset].orientation,
         isTransparent: parsedBody[indexAsset].isTransparent,
         code: assetCode,
-        width:
-          parsedBody[indexAsset].orientation === "horizontal" ? 1792 : 1024,
+        width: parsedBody[indexAsset].orientation === "horizontal" ? 1792 : 1024,
         height: parsedBody[indexAsset].orientation === "vertical" ? 1792 : 1024,
         revisedPrompt: newImage.revisedPrompt,
         description: parsedBody[indexAsset].description,
         tags: parsedBody[indexAsset].tags,
-        url: blockBlobClient.url,
+        url,
       };
 
-      await dalleAssets.insertOne(newAssetPayload);
+      await insertDalleAsset(dalleAssets, newAssetPayload);
       createdAssets.push(newAssetPayload);
     }
 
