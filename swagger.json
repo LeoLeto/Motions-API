@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "DALL·E and Text-to-Speech API",
-    "description": "API for creating and deleting DALL·E assets and converting text to speech",
+    "title": "Motions API",
+    "description": "API for creating, managing, and analyzing DALL·E and other AI-generated assets.",
     "version": "1.0.0"
   },
   "paths": {
@@ -182,6 +182,114 @@
           },
           "400": {
             "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/analyzeImage": {
+      "post": {
+        "summary": "Analyze an image using Azure Vision API",
+        "operationId": "analyzeImage",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string" }
+                },
+                "required": ["url"]
+              },
+              "example": {
+                "url": "https://example.com/image.jpg"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis of the image",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "objects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "rectangle": {
+                            "type": "object",
+                            "properties": {
+                              "x": { "type": "integer" },
+                              "y": { "type": "integer" },
+                              "w": { "type": "integer" },
+                              "h": { "type": "integer" }
+                            }
+                          },
+                          "object": { "type": "string" },
+                          "confidence": { "type": "number" },
+                          "parent": {
+                            "type": "object",
+                            "properties": {
+                              "object": { "type": "string" },
+                              "confidence": { "type": "number" }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "requestId": { "type": "string" },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "height": { "type": "integer" },
+                        "width": { "type": "integer" },
+                        "format": { "type": "string" }
+                      }
+                    },
+                    "modelVersion": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "objects": [
+                    {
+                      "rectangle": { "x": 338, "y": 46, "w": 167, "h": 161 },
+                      "object": "Wall clock",
+                      "confidence": 0.783,
+                      "parent": {
+                        "object": "Clock",
+                        "confidence": 0.802
+                      }
+                    },
+                    {
+                      "rectangle": { "x": 151, "y": 153, "w": 169, "h": 272 },
+                      "object": "Picture frame",
+                      "confidence": 0.528
+                    },
+                    {
+                      "rectangle": { "x": 404, "y": 54, "w": 409, "h": 507 },
+                      "object": "person",
+                      "confidence": 0.855
+                    },
+                    {
+                      "rectangle": { "x": 9, "y": 378, "w": 698, "h": 184 },
+                      "object": "Desk",
+                      "confidence": 0.56
+                    }
+                  ],
+                  "requestId": "77cf3748-bf23-4098-9645-da8ae645a985",
+                  "metadata": {
+                    "height": 576,
+                    "width": 1024,
+                    "format": "Jpeg"
+                  },
+                  "modelVersion": "2021-05-01"
+                }
+              }
+            }
           }
         }
       }

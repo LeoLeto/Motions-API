@@ -15,6 +15,7 @@
     "@azure/functions": "^4.0.0",
     "@azure/storage-blob": "^12.24.0",
     "axios": "^1.7.4",
+    "jimp": "^0.22.12",
     "mongodb": "^6.8.0",
     "openai": "^4.55.7",
     "pino": "^9.3.2",
